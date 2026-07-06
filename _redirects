@@ -1,0 +1,5 @@
+# Redirect root to index
+/home /index.html 301
+
+# SPA fallback (not needed for multi-page but good practice)
+# /* /index.html 200
