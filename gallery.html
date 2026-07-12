@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>GALLERY — NAZMUL PORTFOLIO</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:ital,wght@0,400..900;1,400..900&family=Share+Tech+Mono&family=JetBrains+Mono:wght@300;400;500;700&family=Audiowide&family=Press+Start+2P&family=VT323&family=Major+Mono+Display&family=Rajdhani:wght@400;500;600;700&family=Russo+One&family=Dancing+Script:wght@500;700&family=Italianno&family=Montserrat:wght@400;600;700;900&family=Poppins:wght@400;600;700;900&family=League+Spartan:wght@400;700;900&family=Anton&family=Bebas+Neue&family=Archivo+Black&family=Raleway:wght@400;700;900&family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Bodoni+Moda:wght@400;700;900&family=Pacifico&family=Lobster&family=Satisfy&family=Allura&family=Great+Vibes&family=Kaushan+Script&family=Sacramento&family=Parisienne&family=Alex+Brush&family=Yellowtail&family=Merienda:wght@400;700;900&family=Courgette&family=Marck+Script&family=Arizonia&family=Tangerine:wght@400;700&family=Grand+Hotel&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#000000" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-trail" id="cursor-trail"></div>
+  <div class="scanlines"></div>
+  <div class="grid-bg"></div>
+  <div class="noise-overlay"></div>
+
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <div class="logo-circle">
+          <img id="header-logo-img" class="logo-circle-img" alt="Logo" style="display:none;" />
+          <div class="logo-circle-inner" id="header-logo-fallback">MNH</div>
+        </div>
+        <span class="logo-text">PORTFOLIO</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">HOME</a></li>
+        <li><a href="educational.html">EDUCATIONAL QUALIFICATIONS</a></li>
+        <li><a href="contact.html">CONTACT</a></li>
+        <div class="nav-underline"></div>
+      </ul>
+      <div class="nav-right">
+        <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu"><span></span><span></span><span></span></button>
+        <div class="admin-btn" onclick="window.location='admin.html'">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" role="navigation" aria-label="Mobile navigation">
+      <a href="index.html">HOME</a>
+      <a href="educational.html">EDUCATIONAL QUALIFICATIONS</a>
+      <a href="contact.html">CONTACT</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-hero">
+      <div class="page-title">GALLERY</div>
+      <div class="page-subtitle">// ENCRYPTED IMAGE ARCHIVE</div>
+    </div>
+
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="empty-state" style="grid-column:1/-1;">LOADING ARCHIVE...</div>
+    </div>
+
+    <div id="lightbox" style="
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);
+      z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+      padding:20px;touch-action:manipulation;">
+      <img id="lightbox-img" src="" alt="" style="max-width:95vw;max-height:75vh;object-fit:contain;" />
+      <div id="lightbox-caption" style="font-family:var(--font-code);font-size:12px;color:var(--text-dim);letter-spacing:2px;text-align:center;max-width:90vw;"></div>
+      <button onclick="document.getElementById('lightbox').style.display='none'" style="font-family:var(--font-main);font-size:10px;letter-spacing:3px;background:transparent;border:1px solid var(--border-green);color:var(--neon-green);padding:10px 24px;cursor:pointer;margin-top:5px;">[TAP TO CLOSE]</button>
+    </div>
+  </main>
+
+  <footer class="site-footer" data-cms-section="footer">
+    <span class="blink-cursor footer-copy">© All Rights Reserved</span>
+  </footer>
+
+  <script type="module">
+    import { subscribeTable } from './supabase.js';
+    import {
+      initCursor, initNavUnderline, initGlitchEffects, initMobileMenu, initAudio, initLoader, escapeHtml,
+      initBgSceneAll
+    } from './script.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initLoader(); initCursor(); initNavUnderline();
+      initGlitchEffects(); initMobileMenu(); initAudio();
+      initBgSceneAll();
+
+      subscribeTable('gallery', (items) => {
+        const published = items.filter(i => i.published);
+        const container = document.getElementById('gallery-grid');
+        if (!published.length) {
+          container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">// NO IMAGES IN ARCHIVE YET</div>';
+          return;
+        }
+        container.innerHTML = published.map(img => {
+          const src = img.image_url;
+          if (!src) return '';
+          const caption = escapeHtml(img.caption || '');
+          return `
+            <div class="gallery-item" data-src="${escapeHtml(src)}" data-caption="${caption}">
+              <img src="${escapeHtml(src)}" alt="${caption || 'Image'}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.parentElement.style.display='none'" />
+              <div class="gallery-overlay">
+                <div class="gallery-overlay-text">TAP TO VIEW</div>
+              </div>
+            </div>`;
+        }).filter(Boolean).join('');
+
+        container.querySelectorAll('.gallery-item').forEach(item => {
+          item.addEventListener('click', () => {
+            // Mark this card as tap-active for a moment (bright green border)
+            container.querySelectorAll('.gallery-item.tap-active').forEach(e => e.classList.remove('tap-active'));
+            item.classList.add('tap-active');
+            openLightbox(item.dataset.src, item.dataset.caption);
+          });
+        });
+      }, { order: 'created_at', ascending: true });
+    });
+
+    function openLightbox(src, caption) {
+      const lb = document.getElementById('lightbox');
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-caption').textContent = caption;
+      lb.style.display = 'flex';
+      document.body.classList.add('lightbox-open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').style.display = 'none';
+      document.body.classList.remove('lightbox-open');
+      // Clear tap-active so border returns to normal next time
+      document.querySelectorAll('.gallery-item.tap-active').forEach(e => e.classList.remove('tap-active'));
+    }
+    document.getElementById('lightbox').addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+  </script>
+</body>
+</html>
