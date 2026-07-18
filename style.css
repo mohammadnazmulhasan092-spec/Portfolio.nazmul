@@ -3396,7 +3396,7 @@ body::after {
   pointer-events: none;
   z-index: 1;
 }
-nav, main, section, footer, .islamic-header, .modal, #loading-screen { position: relative; z-index: 2; }
+nav, main, section, footer, .islamic-header, .modal { position: relative; z-index: 2; }
 
 /* Dim the scenic background layers */
 .grid-bg       { opacity: 0.25 !important; }
@@ -4176,8 +4176,15 @@ body * {
   opacity: 1;
 }
 
-/* While booting — body pure black, nothing visible except loader */
+/* While booting — body pure black, nothing visible except loader.
+   position:fixed removes body from the scrollable document flow entirely,
+   so the (still layout-occupying, just visibility:hidden) homepage content
+   underneath can never cause the page to scroll during boot. */
 body.booting {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   background: #000 !important;
   overflow: hidden !important;
 }
