@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — V2</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ADMIN V2 — visual design
+   Deliberately unlike Admin V1: light theme instead of dark
+   terminal, a TOP TAB BAR instead of a left sidebar, an overview
+   DASHBOARD with stat cards (V1 has no such view), MODAL dialogs
+   for adding/editing content instead of always-visible inline
+   forms, and a card-grid content browser instead of V1's stacked
+   list rows. Shares nothing visually with Admin V1; shares only
+   the data/auth functions in shared/.
+   ============================================================ */
+:root{
+  --ink:#14151a; --ink-soft:#5c6170; --paper:#ffffff; --bg:#f3f3f7;
+  --line:#e7e7ee; --accent:#5b4bff; --accent-soft:#eeecff;
+  --ok:#15803d; --ok-soft:#e8f8ef; --danger:#b91c1c; --danger-soft:#fdeaee;
+  --radius:16px; --font:'Inter', system-ui, sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); font-size:14px;}
+a{color:inherit;}
+img{max-width:100%; display:block;}
+button{font-family:var(--font);}
+
+/* ---- Login ---- */
+#login-page{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:radial-gradient(circle at 20% 20%, #eeecff, #f3f3f7 55%);}
+.login-card{background:var(--paper); border:1px solid var(--line); border-radius:24px; padding:38px;
+  width:100%; max-width:380px; box-shadow:0 30px 60px rgba(20,20,40,.08);}
+.login-badge{width:44px; height:44px; border-radius:12px; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:800; margin-bottom:18px;}
+.login-card h1{font-size:21px; margin:0 0 6px;}
+.login-card p{color:var(--ink-soft); margin:0 0 26px; font-size:13px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; margin-bottom:6px; color:var(--ink-soft);}
+.field input, .field textarea, .field select{
+  width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:10px;
+  font-family:var(--font); font-size:14px; background:#fff;
+}
+.field input:focus, .field textarea:focus, .field select:focus{outline:2px solid var(--accent-soft); border-color:var(--accent);}
+.field textarea{resize:vertical; min-height:70px;}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:11px 20px;
+  border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:14px; transition:opacity .15s, transform .1s;}
+.btn:hover{opacity:.92;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--ink); color:#fff; width:100%;}
+.btn-accent{background:var(--accent); color:#fff;}
+.btn-outline{background:#fff; border:1px solid var(--line); color:var(--ink);}
+.btn-danger{background:var(--danger-soft); color:var(--danger);}
+.btn-sm{padding:7px 12px; font-size:12px; border-radius:8px;}
+#login-error{color:var(--danger); font-size:12px; min-height:16px; margin-top:10px;}
+
+/* ---- Shell ---- */
+#dashboard-page{display:none;}
+.topbar{
+  position:sticky; top:0; z-index:30; background:rgba(255,255,255,.9); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-row{display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:60px;}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:15px;}
+.brand .dot{width:26px; height:26px; border-radius:8px; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:12px;}
+.topbar-actions{display:flex; align-items:center; gap:10px;}
+.topbar-actions a{font-size:12px; color:var(--ink-soft); text-decoration:none;}
+
+.tabs{display:flex; gap:4px; padding:0 20px; overflow-x:auto; border-bottom:1px solid var(--line); background:var(--paper);}
+.tab-btn{
+  flex-shrink:0; padding:13px 16px; font-size:13px; font-weight:600; color:var(--ink-soft);
+  border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;
+}
+.tab-btn.active{color:var(--accent); border-bottom-color:var(--accent);}
+
+.content{max-width:1080px; margin:0 auto; padding:28px 24px 60px;}
+.view{display:none;}
+.view.active{display:block;}
+.view-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap;}
+.view-head h2{font-size:20px; margin:0 0 4px;}
+.view-head .sub{color:var(--ink-soft); font-size:13px; margin:0;}
+
+/* ---- Stat cards (Overview — new, not present in V1) ---- */
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px;}
+.stat-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+.stat-card .num{font-size:28px; font-weight:800;}
+.stat-card .lbl{font-size:12px; color:var(--ink-soft); margin-top:4px;}
+.quick-links{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* ---- Generic content card ---- */
+.card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:16px;}
+.card h3{font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin:0 0 16px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+.status{font-size:12px; margin-top:10px; min-height:16px;}
+.status.ok{color:var(--ok);}
+.status.err{color:var(--danger);}
+
+/* ---- Content browser (Gallery/Achievements/Education) — card grid,
+        not V1's stacked inline-editable rows ---- */
+.item-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+.item-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column;}
+.item-thumb{aspect-ratio:4/3; background:var(--bg); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:30px; color:var(--ink-soft);}
+.item-thumb img{width:100%; height:100%; object-fit:cover;}
+.item-body{padding:14px; display:flex; flex-direction:column; gap:6px; flex:1;}
+.item-title{font-weight:700; font-size:14px;}
+.item-meta{font-size:12px; color:var(--ink-soft);}
+.item-tags{display:flex; gap:6px; flex-wrap:wrap;}
+.tag{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.03em;}
+.tag.live{background:var(--ok-soft); color:var(--ok);}
+.tag.hidden{background:var(--danger-soft); color:var(--danger);}
+.item-actions{display:flex; gap:8px; margin-top:auto; padding-top:8px;}
+.empty-hint{color:var(--ink-soft); font-size:13px; padding:30px 0; text-align:center;}
+
+/* ---- Modal ---- */
+.modal-backdrop{position:fixed; inset:0; background:rgba(15,15,25,.45); z-index:60; display:none; align-items:center; justify-content:center; padding:20px;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--paper); border-radius:20px; width:100%; max-width:460px; padding:26px; max-height:90vh; overflow-y:auto;}
+.modal h3{margin:0 0 4px; font-size:17px;}
+.modal .sub{color:var(--ink-soft); font-size:12px; margin:0 0 20px;}
+.modal-actions{display:flex; gap:10px; margin-top:18px;}
+.upload-drop{
+  border:1.5px dashed var(--line); border-radius:12px; padding:18px; text-align:center;
+  font-size:12px; color:var(--ink-soft); cursor:pointer; margin-bottom:14px;
+}
+.upload-drop.has-file{border-color:var(--accent); color:var(--accent);}
+.upload-preview{width:100%; border-radius:10px; margin-bottom:12px; max-height:160px; object-fit:cover;}
+
+/* ---- Toast ---- */
+.toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); z-index:80;
+  background:var(--ink); color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600;
+  opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--danger);}
+
+/* ---- Version management ---- */
+.v-row{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px;}
+.v-row .name{font-weight:700; font-size:14px;}
+.v-row .desc{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+.tag-live{display:inline-block; margin-left:8px; font-size:11px; font-weight:700; color:var(--ok);}
+
+/* ---- Style Studio: swatches + pills (V2-native components, not
+        reused from anywhere in V1's admin) ---- */
+.swatch-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;}
+.swatch{
+  border:2px solid var(--line); border-radius:14px; padding:14px; cursor:pointer;
+  display:flex; flex-direction:column; gap:10px; background:#fff; transition:border-color .15s;
+  font-family:var(--font); text-align:left; width:100%;
+}
+.swatch:focus-visible, .pill:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.swatch.active{border-color:var(--accent);}
+.swatch .chip{height:36px; border-radius:8px; display:block;}
+.swatch .name{font-size:12px; font-weight:700;}
+.pill-row{display:flex; gap:8px; flex-wrap:wrap;}
+.pill{
+  padding:9px 16px; border-radius:999px; border:1.5px solid var(--line); background:#fff;
+  font-size:13px; font-weight:600; cursor:pointer; color:var(--ink-soft);
+}
+.pill.active{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
+
+/* ---- Sections toggle rows ---- */
+.section-toggle-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border:1px solid var(--line); border-radius:12px; padding:12px 16px;
+}
+.switch{position:relative; width:42px; height:24px; flex-shrink:0;}
+.switch input{opacity:0; width:0; height:0;}
+.switch .track{position:absolute; inset:0; background:var(--line); border-radius:999px; cursor:pointer; transition:background .15s;}
+.switch .track::before{content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .15s;}
+.switch input:checked + .track{background:var(--accent);}
+.switch input:checked + .track::before{transform:translateX(18px);}
+
+/* ---- Copy editor fields ---- */
+.copy-field-group{border-bottom:1px solid var(--line); padding:16px 0;}
+.copy-field-group:last-child{border-bottom:none; padding-bottom:0;}
+.copy-field-group:first-child{padding-top:0;}
+.copy-field-group .name{font-size:13px; font-weight:700; margin-bottom:10px; text-transform:capitalize;}
+</style>
+</head>
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <div id="login-page">
+    <div class="login-card">
+      <div class="login-badge">V2</div>
+      <h1>Welcome back</h1>
+      <p>Sign in to manage your portfolio.</p>
+      <div class="field"><label>Email</label><input type="email" id="login-email" autocomplete="username" /></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" autocomplete="current-password" /></div>
+      <button class="btn btn-primary" id="login-btn">Sign in</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div id="dashboard-page">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="brand"><span class="dot">V2</span> Admin</div>
+        <div class="topbar-actions">
+          <a href="/index.html">View site</a>
+          <button class="btn btn-outline btn-sm" id="logout-btn">Sign out</button>
+        </div>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-view="overview">Overview</button>
+        <button class="tab-btn" data-view="general">General</button>
+        <button class="tab-btn" data-view="about">About</button>
+        <button class="tab-btn" data-view="contact">Contact</button>
+        <button class="tab-btn" data-view="skills">Skills</button>
+        <button class="tab-btn" data-view="style">Style</button>
+        <button class="tab-btn" data-view="sections">Sections</button>
+        <button class="tab-btn" data-view="copy">Copy</button>
+        <button class="tab-btn" data-view="gallery">Gallery</button>
+        <button class="tab-btn" data-view="achievements">Achievements</button>
+        <button class="tab-btn" data-view="education">Education</button>
+        <button class="tab-btn" data-view="branding">Branding</button>
+        <button class="tab-btn" data-view="version">Version</button>
+        <button class="tab-btn" data-view="password">Password</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <section class="view active" id="view-overview">
+        <div class="view-head"><div><h2>Overview</h2><p class="sub">A quick snapshot of your portfolio.</p></div></div>
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="card">
+          <h3>Quick actions</h3>
+          <div class="quick-links">
+            <button class="btn btn-accent btn-sm" data-jump="gallery">+ Add gallery image</button>
+            <button class="btn btn-accent btn-sm" data-jump="achievements">+ Add achievement</button>
+            <button class="btn btn-accent btn-sm" data-jump="education">+ Add education entry</button>
+            <button class="btn btn-outline btn-sm" data-jump="version">Manage versions</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GENERAL -->
+      <section class="view" id="view-general">
+        <div class="view-head"><div><h2>General</h2><p class="sub">Hero section shown at the top of the portfolio.</p></div></div>
+        <div class="card">
+          <h3>Hero</h3>
+          <div class="grid2">
+            <div class="field"><label>Name</label><input id="g-name" /></div>
+            <div class="field"><label>Arabic / subtitle line</label><input id="g-arabic" /></div>
+            <div class="field"><label>Button 1 text</label><input id="g-btn1-text" /></div>
+            <div class="field"><label>Button 1 link</label><input id="g-btn1-link" /></div>
+            <div class="field"><label>Button 2 text</label><input id="g-btn2-text" /></div>
+            <div class="field"><label>Button 2 link</label><input id="g-btn2-link" /></div>
+          </div>
+          <button class="btn btn-accent" id="save-general">Save changes</button>
+          <div class="status" id="general-status"></div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="view" id="view-about">
+        <div class="view-head"><div><h2>About</h2><p class="sub">Intro paragraph and the highlight cards shown in the About section.</p></div></div>
+        <div class="card">
+          <h3>Intro</h3>
+          <div class="field"><label>Text</label><textarea id="a-intro"></textarea></div>
+          <button class="btn btn-accent" id="save-about-intro">Save intro</button>
+          <div class="status" id="about-intro-status"></div>
+        </div>
+        <div class="card">
+          <h3>Highlight cards</h3>
+          <div id="about-items-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline btn-sm" id="add-about-item">+ Add card</button>
+            <button class="btn btn-accent btn-sm" id="save-about-items">Save cards</button>
+          </div>
+          <div class="status" id="about-items-status"></div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="view" id="view-contact">
+        <div class="view-head"><div><h2>Contact</h2><p class="sub">Channels shown in the Contact section.</p></div></div>
+        <div class="card">
+          <div class="grid2">
+            <div class="field"><label>Email</label><input id="c-email" /></div>
+            <div class="field"><label>GitHub</label><input id="c-github" /></div>
+            <div class="field"><label>Telegram</label><input id="c-telegram" /></div>
+            <div class="field"><label>WhatsApp</label><input id="c-whatsapp" /></div>
+            <div class="field"><label>Facebook</label><input id="c-facebook" /></div>
+          </div>
+          <button class="btn btn-accent" id="save-contact">Save changes</button>
+          <div class="status" id="contact-status"></div>
+        </div>
+      </section>
+
+      <!-- SKILLS -->
+      <section class="view" id="view-skills">
+        <div class="view-head"><div><h2>Skills</h2><p class="sub">Skill bars shown in the Skills section.</p></div></div>
+        <div class="card">
+          <h3>Skill list</h3>
+          <div id="skills-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline btn-sm" id="add-skill">+ Add skill</button>
+            <button class="btn btn-accent btn-sm" id="save-skills">Save skills</button>
+          </div>
+          <div class="status" id="skills-status"></div>
+        </div>
+      </section>
+
+      <!-- STYLE STUDIO (V2-native equivalent of V1's Appearance + Theme + Per-Text panels —
+           one holistic control surface instead of three separate, granular editors) -->
+      <section class="view" id="view-style">
+        <div class="view-head"><div><h2>Style studio</h2><p class="sub">Site-wide accent color, type scale, and motion — applies instantly to Portfolio V2 only.</p></div></div>
+        <div class="card">
+          <h3>Accent palette</h3>
+          <div class="swatch-grid" id="swatch-grid"></div>
+        </div>
+        <div class="card">
+          <h3>Type scale</h3>
+          <div class="pill-row" id="scale-pills">
+            <button class="pill" data-scale="compact">Compact</button>
+            <button class="pill" data-scale="comfortable">Comfortable</button>
+            <button class="pill" data-scale="spacious">Spacious</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Motion</h3>
+          <div class="pill-row" id="motion-pills">
+            <button class="pill" data-motion="full">Full motion</button>
+            <button class="pill" data-motion="reduced">Reduced motion</button>
+          </div>
+          <div class="status" id="style-status"></div>
+        </div>
+      </section>
+
+      <!-- SECTION VISIBILITY (V2-native equivalent of V1's Section Visibility panel —
+           toggle-pill list instead of a checkbox grid) -->
+      <section class="view" id="view-sections">
+        <div class="view-head"><div><h2>Sections</h2><p class="sub">Show or hide entire sections on Portfolio V2. Home is always shown.</p></div></div>
+        <div class="card">
+          <div id="sections-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="status" id="sections-status"></div>
+        </div>
+      </section>
+
+      <!-- COPY EDITOR (V2-native equivalent of V1's CMS Text Edit panel —
+           a structured per-section kicker/heading editor instead of a flat
+           list of every hardcoded UI string on the site) -->
+      <section class="view" id="view-copy">
+        <div class="view-head"><div><h2>Copy</h2><p class="sub">Override the small kicker label and heading shown at the top of each section. Leave blank to use the default.</p></div></div>
+        <div class="card" id="copy-fields"></div>
+        <button class="btn btn-accent" id="save-copy">Save copy</button>
+        <div class="status" id="copy-status"></div>
+      </section>
+
+      <!-- GALLERY -->
+      <section class="view" id="view-gallery">
+        <div class="view-head">
+          <div><h2>Gallery</h2><p class="sub">Images shown in the Work section.</p></div>
+          <button class="btn btn-accent" data-open-modal="gallery">+ Add image</button>
+        </div>
+        <div class="item-grid" id="gallery-grid"></div>
+      </section>
+
+      <!-- ACHIEVEMENTS -->
+      <section class="view" id="view-achievements">
+        <div class="view-head">
+          <div><h2>Achievements</h2><p class="sub">Milestones shown in the Achievements section.</p></div>
+          <button class="btn btn-accent" data-open-modal="achievements">+ Add achievement</button>
+        </div>
+        <div class="item-grid" id="achievements-grid"></div>
+      </section>
+
+      <!-- EDUCATION -->
+      <section class="view" id="view-education">
+        <div class="view-head">
+          <div><h2>Education</h2><p class="sub">Entries shown in the Education section.</p></div>
+          <button class="btn btn-accent" data-open-modal="education">+ Add entry</button>
+        </div>
+        <div class="item-grid" id="education-grid"></div>
+      </section>
+
+      <!-- BRANDING -->
+      <section class="view" id="view-branding">
+        <div class="view-head"><div><h2>Branding</h2><p class="sub">Logo shown in the site navigation.</p></div></div>
+        <div class="card">
+          <h3>Logo</h3>
+          <div id="brand-preview" class="upload-drop" style="margin-bottom:14px;">Click to upload a logo image</div>
+          <input type="file" id="brand-file" accept="image/*" style="display:none;" />
+          <button class="btn btn-danger btn-sm" id="remove-logo">Remove logo</button>
+          <div class="status" id="brand-status"></div>
+        </div>
+        <div class="card">
+          <h3>Site title &amp; favicon</h3>
+          <p class="sub" style="margin-bottom:14px;">Browser tab title and icon — shared with both portfolios (V1 and V2), whichever is currently published.</p>
+          <div class="field" style="margin-bottom:14px;">
+            <label>Site title</label>
+            <input id="site-title-input" placeholder="e.g. Portfolio" />
+          </div>
+          <button class="btn btn-accent btn-sm" id="site-title-save" style="margin-bottom:18px;">Save title</button>
+          <div id="favicon-preview" class="upload-drop" style="margin-bottom:14px;">Click to upload a favicon image</div>
+          <input type="file" id="favicon-file" accept="image/*" style="display:none;" />
+          <button class="btn btn-danger btn-sm" id="remove-favicon">Remove favicon</button>
+          <div class="status" id="site-meta-status"></div>
+        </div>
+      </section>
+
+      <!-- VERSION MANAGEMENT -->
+      <section class="view" id="view-version">
+        <div class="view-head"><div><h2>Version management</h2><p class="sub">Publishing switches BOTH the public portfolio and this admin dashboard, for every device, immediately.</p></div></div>
+        <div class="card"><h3>Currently live</h3><div id="v-current"></div></div>
+        <div class="card"><h3>Portfolio versions</h3><div id="v-portfolio-list"></div></div>
+        <div class="card"><h3>Admin versions</h3><div id="v-admin-list"></div></div>
+        <div class="card">
+          <h3>Rollback</h3>
+          <p class="sub" style="margin-bottom:12px;">Revert instantly to whatever version was active immediately before the last publish.</p>
+          <button class="btn btn-outline" id="v-rollback">Roll back to previous version</button>
+          <div class="status" id="v-status"></div>
+        </div>
+      </section>
+
+      <!-- PASSWORD -->
+      <section class="view" id="view-password">
+        <div class="view-head"><div><h2>Password</h2><p class="sub">Update your admin login password.</p></div></div>
+        <div class="card">
+          <div class="field"><label>New password</label><input type="password" id="pw-new" autocomplete="new-password" /></div>
+          <div class="field"><label>Confirm new password</label><input type="password" id="pw-confirm" autocomplete="new-password" /></div>
+          <button class="btn btn-accent" id="save-password-btn">Update password</button>
+          <div class="status" id="pw-status"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============ CONTENT MODAL (reused for gallery/achievements/education) ============ -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+      <h3 id="modal-title">Add item</h3>
+      <p class="sub" id="modal-sub"></p>
+      <form id="modal-form"></form>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="modal-cancel" type="button" style="flex:1;">Cancel</button>
+        <button class="btn btn-accent" id="modal-save" type="button" style="flex:1;">Save</button>
+      </div>
+      <div class="status" id="modal-status"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    // Admin V2 — presentation layer only. Every data/auth/storage/
+    // version operation below is one of the exact same functions
+    // Admin V1 calls, imported from shared/ — no business logic is
+    // redefined here, only a completely independent UI (top tabs +
+    // dashboard + modals + card grid, vs V1's sidebar + inline forms).
+    import {
+      loginAdmin, logoutAdmin, onAuthChange, changePassword,
+      getSetting, setSetting, listRows, insertRow, updateRow, deleteRow,
+      uploadImage, deleteImage, getVisitorStats
+    } from '../../shared/supabase.js';
+    import {
+      PORTFOLIO_VERSIONS, ADMIN_VERSIONS, getActiveVersion,
+      publishVersion, rollbackVersion, watchVersionSwitch
+    } from '../../shared/api.js';
+
+    watchVersionSwitch('admin', 'v2');
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[s]));
+    }
+    function toast(msg, isErr) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isErr ? ' err' : '') + ' show';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+    function setStatus(id, msg, ok) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    // ---- Auth ----
+    onAuthChange((user) => {
+      document.getElementById('login-page').style.display = user ? 'none' : 'flex';
+      document.getElementById('dashboard-page').style.display = user ? 'block' : 'none';
+      if (user) initDashboard();
+    });
+    // Client-side login throttling — mitigates casual brute-forcing from a
+    // single browser tab. Real rate limiting still relies on Supabase
+    // Auth's own server-side defaults; this is a cheap, safe addition on
+    // top, not a replacement.
+    const LOGIN_LOCKOUT_KEY = 'admin_login_attempts';
+    function getLoginAttempts() {
+      try { return JSON.parse(sessionStorage.getItem(LOGIN_LOCKOUT_KEY) || '{"count":0,"until":0}'); }
+      catch { return { count: 0, until: 0 }; }
+    }
+    function setLoginAttempts(v) {
+      try { sessionStorage.setItem(LOGIN_LOCKOUT_KEY, JSON.stringify(v)); } catch {}
+    }
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const err = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+      const a = getLoginAttempts();
+      const remaining = Math.max(0, a.until - Date.now());
+      if (remaining > 0) { err.textContent = `Too many attempts — try again in ${Math.ceil(remaining / 1000)}s.`; return; }
+      if (!email || !password) { err.textContent = 'Email and password are required.'; return; }
+      err.textContent = '';
+      btn.disabled = true;
+      try {
+        await loginAdmin(email, password);
+        setLoginAttempts({ count: 0, until: 0 });
+      } catch (e) {
+        const count = a.count + 1;
+        const until = count >= 3 ? Date.now() + Math.min(300000, 5000 * Math.pow(2, count - 3)) : 0;
+        setLoginAttempts({ count, until });
+        err.textContent = e.message || 'Login failed.';
+      } finally { btn.disabled = false; }
+    }
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('logout-btn').addEventListener('click', () => logoutAdmin());
+
+    // ---- Tab / view switching ----
+    function showView(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+    }
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+    document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => showView(b.dataset.jump)));
+
+    let dashboardInited = false;
+    async function initDashboard() {
+      if (dashboardInited) return;
+      dashboardInited = true;
+      await Promise.all([
+        loadOverview(), loadGeneral(), loadAbout(), loadContact(), loadSkills(),
+        loadStyle(), loadSections(), loadCopy(),
+        loadGallery(), loadAchievements(), loadEducation(), loadBranding(), loadSiteMeta(),
+        loadVersionManagement()
+      ]);
+    }
+
+    // ============================================================
+    // OVERVIEW
+    // ============================================================
+    async function loadOverview() {
+      const [gallery, achievements, education, visits] = await Promise.all([
+        listRows('gallery'), listRows('achievements'), listRows('educational'),
+        getVisitorStats().catch(() => ({ total: 0 }))
+      ]);
+      document.getElementById('stat-grid').innerHTML = `
+        <div class="stat-card"><div class="num">${gallery.length}</div><div class="lbl">Gallery images</div></div>
+        <div class="stat-card"><div class="num">${achievements.length}</div><div class="lbl">Achievements</div></div>
+        <div class="stat-card"><div class="num">${education.length}</div><div class="lbl">Education entries</div></div>
+        <div class="stat-card"><div class="num">${visits.total ?? 0}</div><div class="lbl">Total visits</div></div>
+      `;
+    }
+
+    // ============================================================
+    // GENERAL (hero)
+    // ============================================================
+    async function loadGeneral() {
+      const d = (await getSetting('hero')) || {};
+      document.getElementById('g-name').value = d.name || '';
+      document.getElementById('g-arabic').value = d.arabic || '';
+      document.getElementById('g-btn1-text').value = d.btn1_text || '';
+      document.getElementById('g-btn1-link').value = d.btn1_link || '';
+      document.getElementById('g-btn2-text').value = d.btn2_text || '';
+      document.getElementById('g-btn2-link').value = d.btn2_link || '';
+    }
+    document.getElementById('save-general').addEventListener('click', async () => {
+      try {
+        const existing = (await getSetting('hero')) || {};
+        await setSetting('hero', {
+          ...existing,
+          name: document.getElementById('g-name').value.trim(),
+          arabic: document.getElementById('g-arabic').value.trim(),
+          btn1_text: document.getElementById('g-btn1-text').value.trim(),
+          btn1_link: document.getElementById('g-btn1-link').value.trim(),
+          btn2_text: document.getElementById('g-btn2-text').value.trim(),
+          btn2_link: document.getElementById('g-btn2-link').value.trim(),
+        });
+        setStatus('general-status', 'Saved.', true); toast('Saved');
+      } catch (e) { setStatus('general-status', e.message, false); toast(e.message, true); }
+    });
+
+    // ============================================================
+    // ABOUT
+    // ============================================================
+    let aboutItems = [];
+    async function loadAbout() {
+      const d = (await getSetting('about')) || {};
+      document.getElementById('a-intro').value = d.intro || '';
+      aboutItems = Array.isArray(d.items) ? d.items.slice() : [];
+      renderAboutItems();
+    }
+    function renderAboutItems() {
+      document.getElementById('about-items-list').innerHTML = aboutItems.map((it, i) => `
+        <div class="grid2" style="border:1px solid var(--line); border-radius:12px; padding:12px; align-items:center;">
+          <input value="${escapeHtml(it.icon || '')}" placeholder="Icon (emoji)" data-i="${i}" data-f="icon" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;" />
+          <input value="${escapeHtml(it.label || '')}" placeholder="Label" data-i="${i}" data-f="label" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;" />
+          <input value="${escapeHtml(it.text || '')}" placeholder="Text" data-i="${i}" data-f="text" style="grid-column:1/-1;padding:9px 11px;border:1px solid var(--line);border-radius:8px;" />
+          <button class="btn btn-danger btn-sm" data-remove-about="${i}" style="grid-column:1/-1;">Remove</button>
+        </div>
+      `).join('') || '<p class="empty-hint">No cards yet — add one below.</p>';
+      document.getElementById('about-items-list').querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', () => { aboutItems[+inp.dataset.i][inp.dataset.f] = inp.value; });
+      });
+      document.getElementById('about-items-list').querySelectorAll('[data-remove-about]').forEach(btn => {
+        btn.addEventListener('click', () => { aboutItems.splice(+btn.dataset.removeAbout, 1); renderAboutItems(); });
+      });
+    }
+    document.getElementById('add-about-item').addEventListener('click', () => {
+      aboutItems.push({ icon: '✦', label: '', text: '' }); renderAboutItems();
+    });
+    document.getElementById('save-about-intro').addEventListener('click', async () => {
+      try {
+        const existing = (await getSetting('about')) || {};
+        await setSetting('about', { ...existing, intro: document.getElementById('a-intro').value.trim() });
+        setStatus('about-intro-status', 'Saved.', true); toast('Saved');
+      } catch (e) { setStatus('about-intro-status', e.message, false); toast(e.message, true); }
+    });
+    document.getElementById('save-about-items').addEventListener('click', async () => {
+      try {
+        const existing = (await getSetting('about')) || {};
+        await setSetting('about', { ...existing, items: aboutItems });
+        setStatus('about-items-status', 'Saved.', true); toast('Saved');
+      } catch (e) { setStatus('about-items-status', e.message, false); toast(e.message, true); }
+    });
+
+    // ============================================================
+    // CONTACT
+    // ============================================================
+    async function loadContact() {
+      const d = (await getSetting('contact')) || {};
+      document.getElementById('c-email').value = d.email || '';
+      document.getElementById('c-github').value = d.github || '';
+      document.getElementById('c-telegram').value = d.telegram || '';
+      document.getElementById('c-whatsapp').value = d.whatsapp || '';
+      document.getElementById('c-facebook').value = d.facebook || '';
+    }
+    document.getElementById('save-contact').addEventListener('click', async () => {
+      try {
+        await setSetting('contact', {
+          email: document.getElementById('c-email').value.trim(),
+          github: document.getElementById('c-github').value.trim(),
+          telegram: document.getElementById('c-telegram').value.trim(),
+          whatsapp: document.getElementById('c-whatsapp').value.trim(),
+          facebook: document.getElementById('c-facebook').value.trim(),
+        });
+        setStatus('contact-status', 'Saved.', true); toast('Saved');
+      } catch (e) { setStatus('contact-status', e.message, false); toast(e.message, true); }
+    });
+
+    // ============================================================
+    // SKILLS (cms_skills — same shape Admin V1 writes: [{name, level}])
+    // ============================================================
+    const SKILLS_DEFAULT = [
+      { name: 'HTML', level: 90 },
+      { name: 'CSS', level: 85 },
+      { name: 'JavaScript', level: 75 },
+    ];
+    let skillsCache = [];
+    async function loadSkills() {
+      const v = await getSetting('cms_skills');
+      skillsCache = Array.isArray(v) && v.length ? v.slice() : SKILLS_DEFAULT.slice();
+      renderSkillsList();
+    }
+    function renderSkillsList() {
+      const container = document.getElementById('skills-list');
+      if (!skillsCache.length) { container.innerHTML = '<p class="empty-hint">No skills yet — add one below.</p>'; return; }
+      container.innerHTML = skillsCache.map((sk, i) => `
+        <div class="grid2" style="border:1px solid var(--line); border-radius:12px; padding:12px; align-items:center;">
+          <input value="${escapeHtml(sk.name || '')}" placeholder="Skill name" data-i="${i}" data-f="name" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;" />
+          <input type="number" min="0" max="100" value="${parseInt(sk.level || 0, 10)}" placeholder="Level (0-100)" data-i="${i}" data-f="level" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px;" />
+          <button class="btn btn-danger btn-sm" data-remove-skill="${i}" style="grid-column:1/-1;">Remove</button>
+        </div>
+      `).join('');
+      container.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const i = +inp.dataset.i, f = inp.dataset.f;
+          skillsCache[i][f] = f === 'level' ? Math.max(0, Math.min(100, parseInt(inp.value, 10) || 0)) : inp.value;
+        });
+      });
+      container.querySelectorAll('[data-remove-skill]').forEach(btn => {
+        btn.addEventListener('click', () => { skillsCache.splice(+btn.dataset.removeSkill, 1); renderSkillsList(); });
+      });
+    }
+    document.getElementById('add-skill').addEventListener('click', () => {
+      skillsCache.push({ name: '', level: 50 }); renderSkillsList();
+    });
+    document.getElementById('save-skills').addEventListener('click', async () => {
+      try {
+        await setSetting('cms_skills', skillsCache);
+        setStatus('skills-status', 'Saved.', true); toast('Saved');
+      } catch (e) { setStatus('skills-status', e.message, false); toast(e.message, true); }
+    });
+
+    // ============================================================
+    // STYLE STUDIO — cms_v2_style: { preset, scale, motion }
+    // V2-native equivalent of V1's Appearance + Theme + Per-Text panels:
+    // one holistic surface (accent palette / type scale / motion) instead
+    // of three separate granular editors, and clicks apply immediately
+    // (no Save button) rather than V1's edit-then-save pattern — a
+    // deliberately different workflow, not a copy of V1's.
+    // ============================================================
+    const ACCENT_PRESETS = [
+      { id: 'sunset', label: 'Sunset', a: '#ff8a5c', b: '#8b6bff' },
+      { id: 'ocean',  label: 'Ocean',  a: '#2dd4bf', b: '#3b82f6' },
+      { id: 'forest', label: 'Forest', a: '#84cc16', b: '#059669' },
+      { id: 'rose',   label: 'Rose',   a: '#fb7185', b: '#d946ef' },
+    ];
+    let styleCache = { preset: 'sunset', scale: 'comfortable', motion: 'full' };
+    async function loadStyle() {
+      styleCache = { preset: 'sunset', scale: 'comfortable', motion: 'full', ...((await getSetting('cms_v2_style')) || {}) };
+      document.getElementById('swatch-grid').innerHTML = ACCENT_PRESETS.map(p => `
+        <button type="button" class="swatch ${p.id === styleCache.preset ? 'active' : ''}" data-preset="${p.id}" aria-pressed="${p.id === styleCache.preset}">
+          <span class="chip" style="background:linear-gradient(120deg, ${p.a}, ${p.b});"></span>
+          <span class="name">${p.label}</span>
+        </button>
+      `).join('');
+      document.querySelectorAll('#scale-pills .pill').forEach(p => { p.classList.toggle('active', p.dataset.scale === styleCache.scale); p.setAttribute('aria-pressed', p.dataset.scale === styleCache.scale); });
+      document.querySelectorAll('#motion-pills .pill').forEach(p => { p.classList.toggle('active', p.dataset.motion === styleCache.motion); p.setAttribute('aria-pressed', p.dataset.motion === styleCache.motion); });
+    }
+    async function saveStyle() {
+      try { await setSetting('cms_v2_style', styleCache); toast('Style updated'); }
+      catch (e) { setStatus('style-status', e.message, false); }
+    }
+    document.getElementById('swatch-grid').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-preset]'); if (!el) return;
+      styleCache.preset = el.dataset.preset; loadStyle(); saveStyle();
+    });
+    document.getElementById('scale-pills').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-scale]'); if (!el) return;
+      styleCache.scale = el.dataset.scale; loadStyle(); saveStyle();
+    });
+    document.getElementById('motion-pills').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-motion]'); if (!el) return;
+      styleCache.motion = el.dataset.motion; loadStyle(); saveStyle();
+    });
+
+    // ============================================================
+    // SECTION VISIBILITY — cms_v2_sections: { [id]: boolean visible }
+    // V2-native equivalent of V1's Section Visibility panel: toggle
+    // switches that save instantly, instead of V1's checkbox grid.
+    // ============================================================
+    const SECTION_DEFS = [
+      { id: 'skills', label: 'Skills' }, { id: 'work', label: 'Work (Gallery)' },
+      { id: 'achievements', label: 'Achievements' }, { id: 'education', label: 'Education' },
+      { id: 'about', label: 'About' }, { id: 'contact', label: 'Contact' },
+    ];
+    async function loadSections() {
+      const v = (await getSetting('cms_v2_sections')) || {};
+      document.getElementById('sections-list').innerHTML = SECTION_DEFS.map(s => `
+        <div class="section-toggle-row">
+          <span>${s.label}</span>
+          <label class="switch">
+            <input type="checkbox" data-section-toggle="${s.id}" aria-label="Show ${s.label} section" ${v[s.id] === false ? '' : 'checked'} />
+            <span class="track"></span>
+          </label>
+        </div>
+      `).join('');
+      document.querySelectorAll('[data-section-toggle]').forEach(input => {
+        input.addEventListener('change', async () => {
+          try {
+            const existing = (await getSetting('cms_v2_sections')) || {};
+            existing[input.dataset.sectionToggle] = input.checked;
+            await setSetting('cms_v2_sections', existing);
+            toast(input.checked ? 'Section shown' : 'Section hidden');
+          } catch (e) { setStatus('sections-status', e.message, false); }
+        });
+      });
+    }
+
+    // ============================================================
+    // COPY EDITOR — cms_v2_copy: { [sectionId]: { kicker, heading } }
+    // V2-native equivalent of V1's flat CMS Text Edit panel: a
+    // structured per-section editor scoped to exactly the two strings
+    // each V2 section actually has, instead of a long flat list of
+    // every hardcoded UI string across the whole site.
+    // ============================================================
+    let copyCache = {};
+    async function loadCopy() {
+      copyCache = (await getSetting('cms_v2_copy')) || {};
+      document.getElementById('copy-fields').innerHTML = SECTION_DEFS.map(s => `
+        <div class="copy-field-group">
+          <div class="name">${s.label}</div>
+          <div class="grid2">
+            <div class="field"><label>Kicker</label><input data-copy="${s.id}:kicker" value="${escapeHtml((copyCache[s.id] || {}).kicker || '')}" /></div>
+            <div class="field"><label>Heading</label><input data-copy="${s.id}:heading" value="${escapeHtml((copyCache[s.id] || {}).heading || '')}" /></div>
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('save-copy').addEventListener('click', async () => {
+      document.querySelectorAll('[data-copy]').forEach(inp => {
+        const [id, field] = inp.dataset.copy.split(':');
+        copyCache[id] = copyCache[id] || {};
+        copyCache[id][field] = inp.value.trim();
+      });
+      try { await setSetting('cms_v2_copy', copyCache); setStatus('copy-status', 'Saved.', true); toast('Saved'); }
+      catch (e) { setStatus('copy-status', e.message, false); }
+    });
+
+    // ============================================================
+    // BRANDING (logo)
+    // ============================================================
+    async function loadBranding() {
+      const d = (await getSetting('logo')) || {};
+      const box = document.getElementById('brand-preview');
+      box.innerHTML = d.url ? `<img class="upload-preview" src="${escapeHtml(d.url)}" alt="Logo" />` : 'Click to upload a logo image';
+      box.classList.toggle('has-file', !!d.url);
+    }
+    document.getElementById('brand-preview').addEventListener('click', () => document.getElementById('brand-file').click());
+    document.getElementById('brand-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const existing = (await getSetting('logo')) || {};
+        if (existing.path) await deleteImage(existing.path);
+        const { url, path } = await uploadImage(file, null, 'branding');
+        await setSetting('logo', { url, path });
+        await loadBranding();
+        setStatus('brand-status', 'Logo updated.', true); toast('Logo updated');
+      } catch (err) { setStatus('brand-status', err.message, false); toast(err.message, true); }
+    });
+    document.getElementById('remove-logo').addEventListener('click', async () => {
+      try {
+        const existing = (await getSetting('logo')) || {};
+        if (existing.path) await deleteImage(existing.path);
+        await setSetting('logo', {});
+        await loadBranding();
+        setStatus('brand-status', 'Logo removed.', true); toast('Logo removed');
+      } catch (err) { setStatus('brand-status', err.message, false); toast(err.message, true); }
+    });
+
+    // ============================================================
+    // SITE TITLE / FAVICON
+    // (shared 'site_meta' setting — same key read by Admin V1 and both
+    // portfolios; sensible per-portfolio defaults apply when unset)
+    // ============================================================
+    async function loadSiteMeta() {
+      const d = (await getSetting('site_meta')) || {};
+      document.getElementById('site-title-input').value = d.title || '';
+      const box = document.getElementById('favicon-preview');
+      box.innerHTML = d.favicon_url ? `<img class="upload-preview" src="${escapeHtml(d.favicon_url)}" alt="Favicon" />` : 'Click to upload a favicon image';
+      box.classList.toggle('has-file', !!d.favicon_url);
+    }
+    document.getElementById('site-title-save').addEventListener('click', async () => {
+      const title = document.getElementById('site-title-input').value.trim();
+      try {
+        const existing = (await getSetting('site_meta')) || {};
+        await setSetting('site_meta', { ...existing, title });
+        setStatus('site-meta-status', 'Site title saved.', true); toast('Site title saved');
+      } catch (err) { setStatus('site-meta-status', err.message, false); toast(err.message, true); }
+    });
+    document.getElementById('favicon-preview').addEventListener('click', () => document.getElementById('favicon-file').click());
+    document.getElementById('favicon-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const existing = (await getSetting('site_meta')) || {};
+        if (existing.favicon_path) await deleteImage(existing.favicon_path);
+        const { url, path } = await uploadImage(file, null, 'branding');
+        await setSetting('site_meta', { ...existing, favicon_url: url, favicon_path: path });
+        await loadSiteMeta();
+        setStatus('site-meta-status', 'Favicon updated.', true); toast('Favicon updated');
+      } catch (err) { setStatus('site-meta-status', err.message, false); toast(err.message, true); }
+    });
+    document.getElementById('remove-favicon').addEventListener('click', async () => {
+      try {
+        const existing = (await getSetting('site_meta')) || {};
+        if (existing.favicon_path) await deleteImage(existing.favicon_path);
+        await setSetting('site_meta', { ...existing, favicon_url: null, favicon_path: null });
+        await loadSiteMeta();
+        setStatus('site-meta-status', 'Favicon removed.', true); toast('Favicon removed');
+      } catch (err) { setStatus('site-meta-status', err.message, false); toast(err.message, true); }
+    });
+
+    // ============================================================
+    // CONTENT MANAGEMENT — Gallery / Achievements / Education
+    // Card-grid browser + a single reusable modal for add/edit,
+    // in contrast to V1's always-visible inline list+form pattern.
+    // ============================================================
+    const CONTENT = {
+      gallery: {
+        table: 'gallery',
+        gridId: 'gallery-grid',
+        fields: [
+          { key: 'image', type: 'image', label: 'Image', required: true },
+          { key: 'caption', type: 'text', label: 'Caption' },
+        ],
+        title: (r) => r.caption || 'Untitled image',
+        meta: () => '',
+        thumb: (r) => r.image_url,
+      },
+      achievements: {
+        table: 'achievements',
+        gridId: 'achievements-grid',
+        fields: [
+          { key: 'title', type: 'text', label: 'Title', required: true },
+          { key: 'description', type: 'textarea', label: 'Description' },
+          { key: 'date', type: 'text', label: 'Date (e.g. 2025)' },
+          { key: 'image', type: 'image', label: 'Image (optional)' },
+        ],
+        title: (r) => r.title,
+        meta: (r) => r.date || '',
+        thumb: (r) => r.image_url,
+      },
+      education: {
+        table: 'educational',
+        gridId: 'education-grid',
+        fields: [
+          { key: 'cat', type: 'text', label: 'Category (e.g. SKILLS)', required: true },
+          { key: 'title', type: 'text', label: 'Title', required: true },
+          { key: 'description', type: 'textarea', label: 'Description' },
+          { key: 'year', type: 'text', label: 'Year / level' },
+        ],
+        title: (r) => r.title,
+        meta: (r) => [r.cat, r.year].filter(Boolean).join(' · '),
+        thumb: () => null,
+      }
+    };
+
+    async function loadGallery() { await renderItemGrid('gallery'); }
+    async function loadAchievements() { await renderItemGrid('achievements'); }
+    async function loadEducation() { await renderItemGrid('education'); }
+
+    async function renderItemGrid(kind) {
+      const cfg = CONTENT[kind];
+      const rows = await listRows(cfg.table, { order: 'created_at', ascending: false });
+      const grid = document.getElementById(cfg.gridId);
+      if (!rows.length) { grid.innerHTML = '<p class="empty-hint">Nothing here yet — add your first one.</p>'; return; }
+      grid.innerHTML = rows.map(r => {
+        const thumb = cfg.thumb(r);
+        return `
+        <div class="item-card">
+          <div class="item-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy" />` : '—'}</div>
+          <div class="item-body">
+            <div class="item-title">${escapeHtml(cfg.title(r))}</div>
+            ${cfg.meta(r) ? `<div class="item-meta">${escapeHtml(cfg.meta(r))}</div>` : ''}
+            <div class="item-tags"><span class="tag ${r.published !== false ? 'live' : 'hidden'}">${r.published !== false ? 'Published' : 'Hidden'}</span></div>
+            <div class="item-actions">
+              <button class="btn btn-outline btn-sm" data-toggle="${kind}:${r.id}:${r.published !== false}">${r.published !== false ? 'Hide' : 'Publish'}</button>
+              <button class="btn btn-danger btn-sm" data-delete="${kind}:${r.id}">Delete</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-toggle]');
+      if (t) {
+        const [kind, id, wasPublished] = t.dataset.toggle.split(':');
+        try { await updateRow(CONTENT[kind].table, id, { published: wasPublished !== 'true' }); await renderItemGrid(kind); await loadOverview(); toast('Updated'); }
+        catch (err) { toast(err.message, true); }
+        return;
+      }
+      const d = e.target.closest('[data-delete]');
+      if (d) {
+        const [kind, id] = d.dataset.delete.split(':');
+        if (!confirm('Delete this item? This cannot be undone.')) return;
+        try {
+          const rows = await listRows(CONTENT[kind].table);
+          const row = rows.find(r => String(r.id) === id);
+          if (row && row.storage_path) await deleteImage(row.storage_path);
+          await deleteRow(CONTENT[kind].table, id);
+          await renderItemGrid(kind); await loadOverview(); toast('Deleted');
+        } catch (err) { toast(err.message, true); }
+        return;
+      }
+    });
+
+    // ---- Modal ----
+    // Accessibility: traps Tab focus inside the dialog while open, closes on
+    // Escape, and returns focus to whichever button opened it — the same
+    // baseline every modal needs regardless of what's inside it.
+    const backdrop = document.getElementById('modal-backdrop');
+    const modalEl = backdrop.querySelector('.modal');
+    let modalKind = null, modalFile = null, modalTriggerEl = null;
+
+    function focusableIn(el) {
+      return Array.from(el.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(e => e.offsetParent !== null);
+    }
+    function modalKeydown(e) {
+      if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+      if (e.key !== 'Tab') return;
+      const focusable = focusableIn(modalEl);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+
+    function openModal(kind) {
+      modalKind = kind; modalFile = null;
+      modalTriggerEl = document.activeElement;
+      const cfg = CONTENT[kind];
+      document.getElementById('modal-title').textContent = 'Add ' + (kind === 'gallery' ? 'image' : kind === 'achievements' ? 'achievement' : 'education entry');
+      document.getElementById('modal-sub').textContent = 'This will be published immediately.';
+      const form = document.getElementById('modal-form');
+      form.innerHTML = cfg.fields.map(f => {
+        if (f.type === 'image') {
+          return `<div class="field"><label>${f.label}${f.required ? ' *' : ''}</label>
+            <div class="upload-drop" id="modal-drop">Click to choose an image</div>
+            <input type="file" accept="image/*" id="modal-file" style="display:none;" />
+          </div>`;
+        }
+        if (f.type === 'textarea') return `<div class="field"><label>${f.label}</label><textarea data-field="${f.key}"></textarea></div>`;
+        return `<div class="field"><label>${f.label}${f.required ? ' *' : ''}</label><input data-field="${f.key}" /></div>`;
+      }).join('');
+      const drop = document.getElementById('modal-drop');
+      if (drop) {
+        drop.addEventListener('click', () => document.getElementById('modal-file').click());
+        document.getElementById('modal-file').addEventListener('change', (e) => {
+          modalFile = e.target.files[0] || null;
+          drop.textContent = modalFile ? modalFile.name : 'Click to choose an image';
+          drop.classList.toggle('has-file', !!modalFile);
+        });
+      }
+      document.getElementById('modal-status').textContent = '';
+      backdrop.classList.add('open');
+      document.addEventListener('keydown', modalKeydown, true);
+      // Move focus into the dialog once it's actually visible/painted.
+      requestAnimationFrame(() => {
+        const focusable = focusableIn(modalEl);
+        (focusable[0] || modalEl).focus();
+      });
+    }
+    function closeModal() {
+      backdrop.classList.remove('open');
+      document.removeEventListener('keydown', modalKeydown, true);
+      if (modalTriggerEl && document.contains(modalTriggerEl)) modalTriggerEl.focus();
+      modalTriggerEl = null;
+    }
+    document.querySelectorAll('[data-open-modal]').forEach(b => b.addEventListener('click', () => openModal(b.dataset.openModal)));
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+    document.getElementById('modal-save').addEventListener('click', async () => {
+      const cfg = CONTENT[modalKind];
+      const values = {};
+      document.querySelectorAll('#modal-form [data-field]').forEach(el => { values[el.dataset.field] = el.value.trim(); });
+      const requiredText = cfg.fields.find(f => f.required && f.type !== 'image');
+      if (requiredText && !values[requiredText.key]) { setStatus('modal-status', requiredText.label + ' is required.', false); return; }
+      const needsImage = cfg.fields.find(f => f.type === 'image' && f.required);
+      if (needsImage && !modalFile) { setStatus('modal-status', 'An image is required.', false); return; }
+      try {
+        let image_url = null, storage_path = null;
+        if (modalFile) {
+          const up = await uploadImage(modalFile, null, modalKind);
+          image_url = up.url; storage_path = up.path;
+        }
+        const row = { ...values, published: true };
+        if (modalFile) { row.image_url = image_url; row.storage_path = storage_path; }
+        await insertRow(cfg.table, row);
+        closeModal();
+        await renderItemGrid(modalKind); await loadOverview();
+        toast('Added');
+      } catch (err) { setStatus('modal-status', err.message, false); }
+    });
+
+    // ============================================================
+    // VERSION MANAGEMENT — same shared/api.js functions as Admin V1,
+    // rendered with this app's own card style.
+    // ============================================================
+    function renderVersionRows(container, versions, kind, activeId) {
+      container.innerHTML = versions.map(v => `
+        <div class="v-row">
+          <div>
+            <span class="name">${escapeHtml(v.label)}</span>${v.id === activeId ? '<span class="tag-live">● LIVE</span>' : ''}
+            <div class="desc">${escapeHtml(v.description)}</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline btn-sm" data-preview="${v.id}" data-kind="${kind}">Preview</button>
+            ${v.id === activeId ? '' : `<button class="btn btn-accent btn-sm" data-publish="${v.id}" data-kind="${kind}">Publish</button>`}
+          </div>
+        </div>
+      `).join('');
+    }
+    async function loadVersionManagement() {
+      const active = await getActiveVersion();
+      document.getElementById('v-current').innerHTML =
+        `Active version: <strong>${escapeHtml(active.version.toUpperCase())}</strong>` +
+        (active.updated_at ? ` · changed ${new Date(active.updated_at).toLocaleString()}` : '') +
+        `<br/>Rollback target: ${escapeHtml((active.previous || active.version).toUpperCase())}`;
+      renderVersionRows(document.getElementById('v-portfolio-list'), PORTFOLIO_VERSIONS, 'portfolio', active.version);
+      renderVersionRows(document.getElementById('v-admin-list'), ADMIN_VERSIONS, 'admin', active.version);
+    }
+    document.addEventListener('click', async (e) => {
+      const previewBtn = e.target.closest('[data-preview]');
+      if (previewBtn) {
+        const id = previewBtn.dataset.preview, kind = previewBtn.dataset.kind;
+        const path = (kind === 'admin' ? ADMIN_VERSIONS : PORTFOLIO_VERSIONS).find(v => v.id === id)?.path;
+        if (path) window.open(path + '?preview=1', '_blank', 'noopener');
+        return;
+      }
+      const publishBtn = e.target.closest('[data-publish]');
+      if (publishBtn) {
+        const id = publishBtn.dataset.publish, kind = publishBtn.dataset.kind;
+        const label = ((kind === 'admin' ? ADMIN_VERSIONS : PORTFOLIO_VERSIONS).find(v => v.id === id) || {}).label || id;
+        if (!confirm(`Publish "${label}" as the live version for everyone?`)) return;
+        try { await publishVersion(id); await loadVersionManagement(); toast('Published'); }
+        catch (err) { setStatus('v-status', err.message, false); }
+        return;
+      }
+      if (e.target.id === 'v-rollback') {
+        if (!confirm('Roll back to the previously active version?')) return;
+        try { const next = await rollbackVersion(); setStatus('v-status', `Rolled back to ${next.version.toUpperCase()}.`, true); await loadVersionManagement(); toast('Rolled back'); }
+        catch (err) { setStatus('v-status', err.message, false); }
+      }
+    });
+
+    // ============================================================
+    // PASSWORD
+    // ============================================================
+    document.getElementById('save-password-btn').addEventListener('click', async () => {
+      const a = document.getElementById('pw-new').value, b = document.getElementById('pw-confirm').value;
+      if (a.length < 6) { setStatus('pw-status', 'Minimum 6 characters.', false); return; }
+      if (a !== b) { setStatus('pw-status', 'Passwords do not match.', false); return; }
+      try { await changePassword(a); setStatus('pw-status', 'Password updated.', true); toast('Password updated'); }
+      catch (err) { setStatus('pw-status', err.message, false); }
+    });
+  </script>
+</body>
+</html>
