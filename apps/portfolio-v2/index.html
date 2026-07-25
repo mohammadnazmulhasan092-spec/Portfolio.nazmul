@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portfolio — V2</title>
+<link rel="icon" id="favicon-link" href="data:," />
+<meta name="description" content="Portfolio, version 2." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#home">Skip to content</a>
+
+  <div id="preview-banner"></div>
+
+  <!-- cursor-follow gradient blob (desktop only, purely decorative) -->
+  <div class="blob" id="blob" aria-hidden="true"></div>
+
+  <!-- DESKTOP SIDE NAV — vertical dot rail, replaces V1's top hamburger/underline nav -->
+  <nav class="rail" id="rail" aria-label="Section navigation">
+    <a href="#home" class="rail-brand" id="rail-brand">
+      <img id="rail-brand-img" alt="Logo" style="display:none;" />
+      <span id="rail-brand-fallback">P</span>
+    </a>
+    <div class="rail-dots">
+      <a href="#home"         class="rail-dot active" data-target="home"><span>Home</span></a>
+      <a href="#skills"       class="rail-dot" data-target="skills"><span>Skills</span></a>
+      <a href="#work"         class="rail-dot" data-target="work"><span>Work</span></a>
+      <a href="#achievements" class="rail-dot" data-target="achievements"><span>Achievements</span></a>
+      <a href="#education"    class="rail-dot" data-target="education"><span>Education</span></a>
+      <a href="#about"        class="rail-dot" data-target="about"><span>About</span></a>
+      <a href="#contact"      class="rail-dot" data-target="contact"><span>Contact</span></a>
+    </div>
+    <a href="/admin/index.html" class="rail-admin" title="Admin">⚙</a>
+  </nav>
+
+  <!-- MOBILE NAV — fixed bottom tab bar, replaces V1's hamburger dropdown entirely -->
+  <nav class="tabbar" id="tabbar" aria-label="Section navigation">
+    <a href="#home" class="tab active" data-target="home"><i>●</i>Home</a>
+    <a href="#work" class="tab" data-target="work"><i>▦</i>Work</a>
+    <a href="#achievements" class="tab" data-target="achievements"><i>◆</i>Wins</a>
+    <a href="#about" class="tab" data-target="about"><i>○</i>About</a>
+    <a href="#contact" class="tab" data-target="contact"><i>✉</i>Talk</a>
+  </nav>
+
+  <!-- Mobile brand mark — the rail (which normally carries the logo) is
+       hidden on small screens, so this keeps branding visible there too -->
+  <a href="/admin/index.html" class="mobile-brand" id="mobile-brand" title="Admin">
+    <img id="mobile-brand-img" alt="Logo" style="display:none;" />
+    <span id="mobile-brand-fallback">P</span>
+  </a>
+
+  <div class="progress-bar" id="progress-bar"></div>
+
+  <main id="scroller">
+
+    <!-- ============ HOME ============ -->
+    <section id="home" class="panel hero-panel" data-panel tabindex="-1">
+      <div class="panel-inner">
+        <p class="kicker reveal">Portfolio — v2</p>
+        <h1 class="display reveal" id="hero-name">—</h1>
+        <p class="hero-arabic reveal" id="hero-arabic"></p>
+        <div class="hero-actions reveal" id="hero-actions"></div>
+      </div>
+      <div class="marquee reveal" aria-hidden="true">
+        <div class="marquee-track" id="marquee-track"></div>
+      </div>
+    </section>
+
+    <!-- ============ SKILLS ============ -->
+    <section id="skills" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner">
+        <p class="kicker reveal" id="kicker-skills">01 / Capability</p>
+        <h2 class="section-heading reveal" id="heading-skills">Skills &amp; strengths</h2>
+        <div class="skills-grid" id="skills-grid"></div>
+      </div>
+    </section>
+
+    <!-- ============ WORK (Gallery) ============ -->
+    <section id="work" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner wide">
+        <p class="kicker reveal" id="kicker-work">02 / Gallery</p>
+        <h2 class="section-heading reveal" id="heading-work">Selected work</h2>
+        <div class="work-grid" id="work-grid"></div>
+      </div>
+    </section>
+
+    <!-- ============ ACHIEVEMENTS ============ -->
+    <section id="achievements" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner wide">
+        <p class="kicker reveal" id="kicker-achievements">03 / Milestones</p>
+        <h2 class="section-heading reveal" id="heading-achievements">Achievements</h2>
+        <div class="ach-list" id="ach-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ EDUCATION ============ -->
+    <section id="education" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner">
+        <p class="kicker reveal" id="kicker-education">04 / Background</p>
+        <h2 class="section-heading reveal" id="heading-education">Education &amp; learning</h2>
+        <div class="edu-rows" id="edu-rows"></div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner">
+        <p class="kicker reveal" id="kicker-about">05 / About</p>
+        <h2 class="section-heading reveal" id="heading-about">A little about me</h2>
+        <p class="lede reveal" id="about-intro">—</p>
+        <div class="about-grid" id="about-items"></div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section id="contact" class="panel" data-panel tabindex="-1">
+      <div class="panel-inner">
+        <p class="kicker reveal" id="kicker-contact">06 / Contact</p>
+        <h2 class="section-heading reveal" id="heading-contact">Let's talk</h2>
+        <div class="contact-orbit" id="contact-orbit"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
