@@ -24,12 +24,12 @@ import { getSetting, setSetting, subscribeSetting } from './supabase.js';
 // ============================================================
 export const PORTFOLIO_VERSIONS = [
   { id: 'v1', label: 'Portfolio V1', description: 'Cyberpunk terminal design — original release.', path: '/apps/portfolio-v1/index.html' },
-  { id: 'v2', label: 'Portfolio V2', description: 'Clean editorial design — next generation.',        path: '/apps/portfolio-v2/index.html' }
+  { id: 'v2', label: 'Portfolio V2', description: 'Cinematic Future City — scroll-driven 3D flight through a living metropolis.', path: '/apps/portfolio-v2/index.html' }
 ];
 
 export const ADMIN_VERSIONS = [
   { id: 'v1', label: 'Admin V1', description: 'Original admin dashboard.',       path: '/apps/admin-v1/admin.html' },
-  { id: 'v2', label: 'Admin V2', description: 'Redesigned admin dashboard.',     path: '/apps/admin-v2/admin.html' }
+  { id: 'v2', label: 'Admin V2', description: 'Mission-control dashboard for the Cinematic Future City.', path: '/apps/admin-v2/admin.html' }
 ];
 
 function listFor(kind) {

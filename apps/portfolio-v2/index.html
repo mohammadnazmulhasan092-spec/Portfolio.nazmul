@@ -3,147 +3,92 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Portfolio — V2</title>
+<title>Portfolio — The Cinematic Future City</title>
 <link rel="icon" id="favicon-link" href="data:," />
-<meta name="description" content="Portfolio, version 2 — 3D animated." />
+<meta name="description" content="A scroll-driven cinematic flight through a living future-city portfolio." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Luxury loading sequence — removed by shared/motion.js initLoader() once the scene + first data paint are ready -->
-  <div id="mx-loader" class="mx-loader" aria-hidden="true">
-    <div class="mx-loader-mark" id="mx-loader-mark">P</div>
-    <div class="mx-loader-bar"><span></span></div>
+<a class="skip-link" href="#contact-panels">Skip cinematic intro, go to contact info</a>
+
+<!-- ============ LOADING SCREEN ============ -->
+<div id="loading-screen">
+  <div class="loading-mark" id="loading-mark">ASSEMBLING THE CITY</div>
+  <div class="loading-track"><div class="loading-fill" id="loading-fill"></div></div>
+  <div class="loading-sub" id="loading-sub">Loading districts…</div>
+</div>
+
+<!-- ============ ZONE 0 — PRELUDE ============ -->
+<div id="prelude" role="status">
+  <div class="glyph" aria-hidden="true"><span></span></div>
+  <p id="prelude-text">Scroll to Enter the City</p>
+</div>
+
+<!-- ============ PERSISTENT HUD ============ -->
+<div id="hud" aria-hidden="true">
+  <div id="hud-name">—</div>
+  <div id="hud-zone">Cloudbank</div>
+</div>
+<div id="progress-rail" aria-hidden="true"><div id="progress-fill"></div></div>
+
+<!-- ============ ACCESSIBILITY TOGGLE ============ -->
+<button id="a11y-toggle" aria-pressed="false" title="Toggle reduced motion (discrete stops instead of continuous flight)">
+  Reduced Motion: Off
+</button>
+
+<!-- ============ THE WORLD ============ -->
+<canvas id="city-canvas" aria-hidden="true"></canvas>
+
+<!-- ============ HOLOGRAPHIC INFORMATION LAYER ============
+     Real HTML/CSS panels, positioned every frame from 3D world
+     anchors projected to screen space (see script.js). This keeps
+     every piece of content genuinely readable and accessible while
+     still visually "existing" at a location in the world, per the
+     architecture's Part 14 (holographic layer) + legibility rule. -->
+<div class="holo-layer" id="holo-layer">
+
+  <!-- Zone 3 — Headquarters: identity + About, folded into one display
+       per the architecture's own resolved placement (Part 2, option a) -->
+  <div class="holo-panel" id="panel-hq" data-anchor="hq">
+    <p class="holo-kicker">Headquarters</p>
+    <h3 id="hq-name">—</h3>
+    <p id="hq-role"></p>
+    <p id="hq-intro"></p>
   </div>
 
-  <a class="skip-link" href="#home">Skip to content</a>
+  <!-- Zone 4 — Boulevard: one panel per project, injected dynamically -->
+  <div id="boulevard-panels"></div>
 
-  <canvas id="bg-canvas" aria-hidden="true"></canvas>
-  <div class="veil" aria-hidden="true"></div>
-  <div class="mx-noise" aria-hidden="true"></div>
+  <!-- Zone 5 — Tech Campus: one small label per skill icon, injected dynamically -->
+  <div id="skill-labels"></div>
 
-  <!-- Living background — aurora blobs + light streaks + floating glass particles, layered under the 3D canvas' veil but above the canvas itself. Purely decorative (aria-hidden), paused offscreen and disabled under reduced motion via shared/motion.js. -->
-  <div class="mx-aurora" aria-hidden="true">
-    <span class="mx-blob mx-blob-a" data-mx-parallax="0.04"></span>
-    <span class="mx-blob mx-blob-b" data-mx-parallax="-0.03"></span>
+  <!-- Zone 6 — Learning Campus: one panel per education stage, injected dynamically -->
+  <div id="education-panels"></div>
+
+  <!-- Zone 7 — Museum: one panel per achievement, injected dynamically -->
+  <div id="museum-panels"></div>
+
+  <!-- Zone 8 — Communication Tower: contact channels -->
+  <div class="holo-panel" id="panel-tower" data-anchor="tower" style="max-width:280px;">
+    <p class="holo-kicker">Communication Tower</p>
+    <h3>Let's talk</h3>
+    <div id="contact-panels"></div>
   </div>
-  <div class="mx-streaks" aria-hidden="true"><span></span><span></span><span></span></div>
-  <div class="mx-particles" aria-hidden="true">
-    <span></span><span></span><span></span><span></span><span></span><span></span>
-  </div>
 
-  <div id="preview-banner"></div>
+</div>
 
-  <!-- DESKTOP SIDE NAV — vertical dot rail -->
-  <a href="#home" class="rail-brand" id="rail-brand">
-    <img id="rail-brand-img" alt="Logo" style="display:none;" />
-    <span id="rail-brand-fallback">P</span>
-  </a>
-  <nav class="rail" id="rail" aria-label="Section navigation">
-    <div class="rail-dots">
-      <a href="#home"         class="rail-dot active" data-target="home"><span>Home</span></a>
-      <a href="#skills"       class="rail-dot" data-target="skills"><span>Skills</span></a>
-      <a href="#work"         class="rail-dot" data-target="work"><span>Work</span></a>
-      <a href="#achievements" class="rail-dot" data-target="achievements"><span>Achievements</span></a>
-      <a href="#education"    class="rail-dot" data-target="education"><span>Education</span></a>
-      <a href="#about"        class="rail-dot" data-target="about"><span>About</span></a>
-      <a href="#contact"      class="rail-dot" data-target="contact"><span>Contact</span></a>
-    </div>
-    <a href="/admin/index.html" class="rail-admin" title="Admin">⚙</a>
-  </nav>
+<div id="scroll-spacer" aria-hidden="true"></div>
 
-  <!-- MOBILE NAV — fixed bottom tab bar -->
-  <nav class="tabbar" id="tabbar" aria-label="Section navigation">
-    <a href="#home" class="tab active" data-target="home"><i>●</i>Home</a>
-    <a href="#work" class="tab" data-target="work"><i>▦</i>Work</a>
-    <a href="#achievements" class="tab" data-target="achievements"><i>◆</i>Wins</a>
-    <a href="#about" class="tab" data-target="about"><i>○</i>About</a>
-    <a href="#contact" class="tab" data-target="contact"><i>✉</i>Talk</a>
-  </nav>
-
-  <a href="#home" class="mobile-brand" id="mobile-brand">
-    <img id="mobile-brand-img" alt="Logo" style="display:none;" />
-    <span id="mobile-brand-fallback">P</span>
-  </a>
-
-  <div class="progress-bar" id="progress-bar"></div>
-
-  <main>
-
-    <!-- ============ HOME ============ -->
-    <section id="home" class="panel hero-panel" data-panel tabindex="-1">
-      <div class="panel-inner">
-        <p class="kicker reveal">Portfolio — v2 · 3D</p>
-        <h1 class="display reveal" id="hero-name">—</h1>
-        <p class="hero-arabic reveal" id="hero-arabic"></p>
-        <div class="hero-actions reveal" id="hero-actions"></div>
-      </div>
-      <div class="marquee reveal" aria-hidden="true">
-        <div class="marquee-track" id="marquee-track"></div>
-      </div>
-    </section>
-
-    <!-- ============ SKILLS ============ -->
-    <section id="skills" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner">
-        <p class="kicker reveal" id="kicker-skills">01 / Capability</p>
-        <h2 class="section-heading reveal" id="heading-skills">Skills &amp; strengths</h2>
-        <div class="skills-grid" id="skills-grid"></div>
-      </div>
-    </section>
-
-    <!-- ============ WORK (Gallery) ============ -->
-    <section id="work" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner wide">
-        <p class="kicker reveal" id="kicker-work">02 / Gallery</p>
-        <h2 class="section-heading reveal" id="heading-work">Selected work</h2>
-        <div class="work-grid" id="work-grid"></div>
-      </div>
-    </section>
-
-    <!-- ============ ACHIEVEMENTS ============ -->
-    <section id="achievements" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner wide">
-        <p class="kicker reveal" id="kicker-achievements">03 / Milestones</p>
-        <h2 class="section-heading reveal" id="heading-achievements">Achievements</h2>
-        <div class="ach-list" id="ach-list"></div>
-      </div>
-    </section>
-
-    <!-- ============ EDUCATION ============ -->
-    <section id="education" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner">
-        <p class="kicker reveal" id="kicker-education">04 / Background</p>
-        <h2 class="section-heading reveal" id="heading-education">Education &amp; learning</h2>
-        <div class="edu-rows" id="edu-rows"></div>
-      </div>
-    </section>
-
-    <!-- ============ ABOUT ============ -->
-    <section id="about" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner">
-        <p class="kicker reveal" id="kicker-about">05 / About</p>
-        <h2 class="section-heading reveal" id="heading-about">A little about me</h2>
-        <p class="lede reveal" id="about-intro">—</p>
-        <div class="about-grid" id="about-items"></div>
-      </div>
-    </section>
-
-    <!-- ============ CONTACT ============ -->
-    <section id="contact" class="panel" data-panel tabindex="-1">
-      <div class="panel-inner">
-        <p class="kicker reveal" id="kicker-contact">06 / Contact</p>
-        <h2 class="section-heading reveal" id="heading-contact">Let's talk</h2>
-        <div class="contact-orbit" id="contact-orbit"></div>
-        <p class="footer-line reveal">Portfolio V2 · <a href="/admin/index.html">Admin</a></p>
-      </div>
-    </section>
-
-  </main>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script type="module" src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>

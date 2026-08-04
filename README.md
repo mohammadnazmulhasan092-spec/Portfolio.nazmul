@@ -82,38 +82,43 @@ underlying calls into `shared/api.js`):
   the original single-folder project. Only import paths and a handful of
   navigation links changed (they now point through `shared/` and the root
   routers instead of same-folder files).
-- **Portfolio V2** — a complete, independently-designed single-page
-  experience built around a live 3D background: a fixed Three.js canvas
-  (particle field + slowly-rotating low-poly shapes) whose camera moves
-  through one waypoint per section as you scroll, layered under dark
-  glass-card content (near-black + amber/violet aurora gradients) — vs.
-  V1's black/neon-green terminal look. Navigation is a fixed vertical
-  dot-rail on desktop that becomes a fixed bottom tab bar on mobile — a
-  different *component*, not a collapsed version of the same one — vs.
-  V1's top nav + hamburger dropdown at every size. Sections scroll
-  continuously (no scroll-snap, so the camera motion reads smoothly)
-  with reveal-on-scroll, in the order Home → Skills → Work →
-  Achievements → Education → About → Contact, instead of V1's separate
-  multi-page structure. It has full feature parity with V1's content:
-  hero, about, skills, contact, **and** gallery/achievements/education
-  (rendered as sections here instead of separate pages) — all reading
-  the same underlying `settings`/table data through `shared/supabase.js`.
-  `prefers-reduced-motion` and touch devices get a lighter scene
-  (fewer particles/shapes, no parallax).
-- **Admin V2** — a complete, independently-designed dashboard: a top tab
-  bar instead of V1's left sidebar, restyled with the same dark
-  glass/aurora look as the new Portfolio V2 (animated gradient backdrop,
-  blurred glass cards, glowing accent); a stats-based **Overview** page
-  (total gallery images/achievements/education entries/visits) that V1
-  doesn't have at all; modal dialogs for adding gallery images,
-  achievements, and education entries instead of V1's always-visible
-  inline forms; a card-grid content browser (thumbnail + tags +
-  publish/hide/delete) instead of V1's stacked list rows; plus
-  General/About/Contact/Branding(logo)/Password, and the required
-  Version Management panel — all calling the exact same
-  `shared/supabase.js` / `shared/api.js` functions Admin V1 uses. Fully
-  functional end to end: every panel reads and writes real data, no
-  placeholders.
+- **Portfolio V2 — "The Cinematic Future City"** — a full rebuild
+  implementing `CINEMATIC-FUTURE-CITY-ARCHITECTURE.md`: a full-bleed
+  Three.js scene (no page scroll-snap sections at all) where scrolling
+  drives one continuous camera flight — via a `CatmullRomCurve3` with
+  smootherstep easing at every zone boundary — down through a procedural
+  night-time metropolis: Cloudbank → Descent → Street Level →
+  Headquarters → Project Boulevard → Technology Campus → Learning
+  Campus → Museum → Communication Tower. Buildings, avenue length, and
+  campus size are generated from the real content counts (project count
+  drives Boulevard length, education-entry count drives Learning Campus
+  length). Content is shown through a "holographic" layer of real HTML
+  panels projected from 3D world anchors onto the screen every frame —
+  not baked into the 3D scene — so it stays fully readable/accessible
+  while still visually "existing" at a location in the world. Ambient
+  life (traffic, pedestrian silhouettes, drones, streetlights, fountains,
+  swaying trees, cycling billboards, and periodically re-lit building
+  windows) runs on its own real-time clock, independent of scroll
+  position, per the architecture's "world memory" requirement. A
+  reduced-motion mode swaps the sweeping flight for discrete zone-to-zone
+  jumps. Reads the exact same `hero` / `about` / `contact` / `cms_skills`
+  / `gallery` / `achievements` / `educational` / `logo` data V1 reads —
+  the only schema change is 4 new, additive, optional columns on
+  `gallery` (`title`, `tech_tags`, `demo_url`, `repo_url`) so each row
+  can render as a full project card; V1 never references them and is
+  unaffected. Shares no visual or structural code with the previous V2.
+- **Admin V2 — "Mission Control"** — a complete, independently-designed
+  dashboard built to manage the Cinematic Future City: a left icon-rail
+  (not V1's sidebar, not the previous V2's top tab bar) on a dark
+  blueprint/schematic backdrop with cyan/amber monospace readouts —
+  visually and structurally unrelated to both V1 and the previous V2.
+  Sections are named after what they control in the world (Headquarters
+  = hero/about, Boulevard = projects, Tech Campus = skills, Learning
+  Campus = education, Museum = achievements, Tower = contact), plus
+  Overview stats, Branding, Account, and the required Version Management
+  panel — all calling the exact same `shared/supabase.js` / `shared/api.js`
+  functions Admin V1 uses. Fully functional end to end: every panel reads
+  and writes real data, no placeholders.
 
 Both V2 apps import only from `shared/` — neither references anything
 inside `apps/portfolio-v1/` or `apps/admin-v1/` (verified).
