@@ -20,15 +20,6 @@ create table if not exists public.gallery (
   created_at timestamptz not null default now()
 );
 
--- 2b. GALLERY — additive columns for Portfolio V2 ("Project Boulevard")
--- V1 never reads these columns and keeps working exactly as before;
--- V2 uses them to render each gallery row as a full "project" (title,
--- tech stack, live demo, source repo) instead of just an image+caption.
-alter table public.gallery add column if not exists title text;
-alter table public.gallery add column if not exists tech_tags text[] not null default '{}';
-alter table public.gallery add column if not exists demo_url text;
-alter table public.gallery add column if not exists repo_url text;
-
 -- 3. ACHIEVEMENTS
 create table if not exists public.achievements (
   id uuid primary key default gen_random_uuid(),
